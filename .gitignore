@@ -1,0 +1,7 @@
+# Local tooling: the design skill and its inspector screenshots
+.claude/
+.taste-skill/
+
+node_modules/
+dist/
+.DS_Store
