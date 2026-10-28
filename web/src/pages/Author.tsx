@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 import { CATEGORIES } from '../data/genesis'
-import { authorEntries, totalReactions, useChain } from '../lib/chain'
+import { authorEntries, totalReactions, useChain, type Entry } from '../lib/chain'
 import { dateLong, num, plural, short } from '../lib/format'
 import { explorerAddress } from '../config'
 import { ArrowOut, Constellation } from '../components/Glyphs'
@@ -10,6 +10,7 @@ import { CopyLink, Hash } from '../components/Copy'
 import { CategoryTabs, ChainFeed } from '../components/Feed'
 import { useUi } from '../components/Shell'
 import NotFound from './NotFound'
+import { Sky } from '../components/Sky'
 
 export default function AuthorPage() {
   const { address = '' } = useParams()
@@ -21,6 +22,7 @@ export default function AuthorPage() {
   const addr = address.toLowerCase()
   const mine = authorEntries(entries, addr)
   const isYou = wallet?.address === addr
+  const isMine = useCallback((e: Entry) => e.author === addr, [addr])
 
   useEffect(() => {
     document.title = `${short(addr)} — Stella`
@@ -55,6 +57,16 @@ export default function AuthorPage() {
           <div><dt>Reactions received</dt><dd>{num(received)}</dd></div>
         </dl>
       </header>
+
+      {mine.length > 0 && (
+        <section className="card sky-card author-sky" aria-labelledby="sky-h">
+          <div className="sky-head">
+            <h2 id="sky-h" className="card-title">Where this wallet sits in the chain</h2>
+            <p className="faint">{plural(mine.length, 'lit star', 'lit stars')} among {plural(entries.length, 'entry', 'entries')} on the board.</p>
+          </div>
+          <Sky entries={entries} highlight={isMine} height={180} label={`The chain of ${num(entries.length)} entries with this wallet's ${num(mine.length)} lit`} />
+        </section>
+      )}
 
       <section className="feed" aria-labelledby="diary-h">
         <div className="feed-head">

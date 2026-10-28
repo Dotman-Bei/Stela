@@ -39,6 +39,11 @@ removed without breaking the line) is the thing you see first. Colour is spent o
 star-gold of a recorded entry, its chain link and its reactions.
 
 **The face of this product** (what makes it Stella, not a dark-mode kit):
+0. **The sky** — the lead block of the Board: every entry is a gold star, left to right in chain order,
+   its height from its own entry hash and its size from its reactions, each joined to the one before
+   it by a line. Hover, drag a thumb or arrow along it to read any entry in the caption beside it;
+   click or Enter opens it. A category tab dims the other stars; on an Author page the wallet's own
+   stars are lit among the whole chain. This is the screen's live thing.
 1. **The chain strand** — a vertical line down the left of every feed, one gold point per entry, the
    short `prevEntryHash` beside each link. The signature element; it appears on Board, Entry and Author.
 2. **Star-gold as the one data hue** (replacing the sheet's lime, which belongs to sport).
@@ -82,6 +87,8 @@ No tracked capitals, no weight above 600, sentence case everywhere.
 vertical). **22px is card padding.** 32px from the title row to the first card. Feed rows: text
 block + 22px top/bottom. Column: 1120px centred, 16px side margins on phone.
 
+Type scale: 12 · 14 · 16 · 20 · 24, plus the 32px lead figure and the footer wordmark.
+
 Radii: cards 20px, controls fully round (999px), code wells 12px. Nothing in between.
 
 ### Motion rules
@@ -124,7 +131,16 @@ copy) · `View contract on explorer` · `Source on GitHub`.
   the one before it. Nothing can be edited or deleted — not by you, not by us.*
 - Right: freshness stamp `Live · last entry 2 min ago`.
 
-**Row 1 — 6-column grid: composer (4) beside the record (2)**
+**Row 1 — the sky** (full width): heading **The chain**, the line *Each star is an entry, joined to
+the one before it by its hash. Bigger stars have more reactions.*, the constellation, and a caption
+panel (364px) showing the selected entry — the newest by default.
+
+**Row 2 — the feed (742px) beside a sticky rail (364px)**. The feed is grouped by day on the strand
+(**Today · 5 entries**, **Yesterday**, **Wednesday 21 October**). The rail holds the composer, then
+the record; it sticks under the top bar. Below 1024px the rail folds: composer before the feed,
+record after it.
+
+*(Earlier layout, kept for reference: composer (4) beside the record (2).)*
 
 *Composer card* (4 columns)
 - Heading: **Say it on-chain. It stays on-chain.**

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getStats, totalReactions, useChain, type Entry } from '../lib/chain'
 import { CATEGORIES } from '../data/genesis'
@@ -6,6 +6,7 @@ import { ago, num, plural } from '../lib/format'
 import { Composer } from '../components/Composer'
 import { CategoryTabs, ChainFeed } from '../components/Feed'
 import { DEMO_MODE } from '../config'
+import { Sky } from '../components/Sky'
 
 const PAGE = 20
 
@@ -44,95 +45,106 @@ export default function Board() {
   const shown = visible.slice(0, limit)
   const mr = stats.mostReacted
   const fresh = useFresh(latest.id)
+  const highlight = useCallback((e: Entry) => category === null || e.category === category, [category])
 
   return (
     <div className="col page">
       <div className="title-row">
         <div>
           <h1>The board</h1>
-          <p className="subline">Every entry here is stored word for word on BOT Chain and linked by hash to the one before it. Nothing can be edited or deleted — not by you, not by us.</p>
+          <p className="subline">Every entry is stored word for word on BOT Chain and linked by hash to the one before it. Nothing here can be edited or deleted.</p>
         </div>
         <p className="freshness">
           <span className="live-dot" aria-hidden="true" /> Live · last entry {ago(latest.timestamp)}
         </p>
       </div>
 
-      <div className="grid6 board-top">
-        <section className="card span4" aria-label="Post an entry">
-          <Composer />
-        </section>
-
-        <section className="card span2 record" aria-labelledby="record-h">
-          <h2 id="record-h" className="card-title">The record</h2>
-          <dl className="figures">
-            <div className="fig fig-lead">
-              <dt>Entries on the board</dt>
-              <dd>{num(stats.total)}</dd>
-            </div>
-            <div className="fig">
-              <dt>Posted today</dt>
-              <dd>{num(stats.today)}</dd>
-            </div>
-            <div className="fig fig-wide">
-              <dt>Most reacted</dt>
-              <dd>
-                <Link to={`/entry/${mr.id}`} className="mr">
-                  <span className="mr-head">#{num(mr.id)} · {plural(totalReactions(mr), 'reaction')}</span>
-                  <span className="mr-text">{mr.text}</span>
-                </Link>
-              </dd>
-            </div>
-            <div className="fig fig-wide">
-              <dt>Entries per day, last 7 days</dt>
-              <dd><DayBars entries={entries} /></dd>
-            </div>
-          </dl>
-          <p className="source">{DEMO_MODE ? 'Demo data, computed from the entries below.' : 'Read live from the contract.'}</p>
-        </section>
-      </div>
-
-      <section className="feed" ref={feedRef} aria-labelledby="feed-h">
-        <div className="feed-head">
-          <h2 id="feed-h">Latest entries</h2>
-          {waiting > 0 && (
-            <button
-              type="button"
-              className="btn-text new-notice"
-              onClick={() => {
-                setShownUpTo(entries.length)
-                feedRef.current?.scrollIntoView({ behavior: 'smooth' })
-              }}
-            >
-              {plural(waiting, 'new entry', 'new entries')} — show {waiting === 1 ? 'it' : 'them'}
-            </button>
-          )}
+      <section className="card sky-card" aria-labelledby="sky-h">
+        <div className="sky-head">
+          <h2 id="sky-h" className="card-title">The chain{category !== null && <span className="faint"> · {CATEGORIES[category].plural.toLowerCase()} lit</span>}</h2>
+          <p className="faint">Each star is an entry, joined to the one before it by its hash. Bigger stars have more reactions.</p>
         </div>
-        <CategoryTabs counts={stats.byCategory} total={stats.total} value={category} onChange={(v) => { setCategory(v); setLimit(PAGE) }} />
-        <div className="toolbar">
-          <label className="search">
-            <span className="sr-only">Search text or address</span>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg>
-            <input type="search" placeholder="Search text or address" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE) }} />
-          </label>
-          <p className="faint">{plural(visible.length, category === null ? 'entry' : CATEGORIES[category].name.toLowerCase(), category === null ? 'entries' : CATEGORIES[category].plural.toLowerCase())} · newest first</p>
-        </div>
-
-        {visible.length === 0 ? (
-          <div className="empty">
-            <p>No entries match “{query}”.</p>
-            <button type="button" className="btn" onClick={() => { setQuery(''); setCategory(null) }}>Clear the filters</button>
-          </div>
-        ) : (
-          <ChainFeed entries={shown} fresh={fresh} />
-        )}
-
-        {visible.length > shown.length && (
-          <div className="load-more">
-            <button type="button" className="btn" onClick={() => setLimit((l) => l + PAGE)}>Load {Math.min(PAGE, visible.length - shown.length)} more</button>
-            <p className="faint">Showing 1–{shown.length} of {num(visible.length)}</p>
-          </div>
-        )}
+        <Sky entries={entries.slice(0, shownUpTo)} highlight={highlight} label={`The chain of ${num(shownUpTo)} entries, oldest on the left`} />
       </section>
+
+      <div className="board-body">
+        <section className="feed board-feed" ref={feedRef} aria-labelledby="feed-h">
+          <div className="feed-head">
+            <h2 id="feed-h">Latest entries</h2>
+            {waiting > 0 && (
+              <button
+                type="button"
+                className="btn-text new-notice"
+                onClick={() => {
+                  setShownUpTo(entries.length)
+                  feedRef.current?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              >
+                {plural(waiting, 'new entry', 'new entries')} — show {waiting === 1 ? 'it' : 'them'}
+              </button>
+            )}
+          </div>
+          <CategoryTabs counts={stats.byCategory} total={stats.total} value={category} onChange={(v) => { setCategory(v); setLimit(PAGE) }} />
+          <div className="toolbar">
+            <label className="search">
+              <span className="sr-only">Search text or address</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg>
+              <input type="search" placeholder="Search text or address" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE) }} />
+            </label>
+            <p className="faint">{plural(visible.length, category === null ? 'entry' : CATEGORIES[category].name.toLowerCase(), category === null ? 'entries' : CATEGORIES[category].plural.toLowerCase())} · newest first</p>
+          </div>
+
+          {visible.length === 0 ? (
+            <div className="empty">
+              <p>No entries match “{query}”.</p>
+              <button type="button" className="btn" onClick={() => { setQuery(''); setCategory(null) }}>Clear the filters</button>
+            </div>
+          ) : (
+            <ChainFeed entries={shown} fresh={fresh} byDay />
+          )}
+
+          {visible.length > shown.length && (
+            <div className="load-more">
+              <button type="button" className="btn" onClick={() => setLimit((l) => l + PAGE)}>Load {Math.min(PAGE, visible.length - shown.length)} more</button>
+              <p className="faint">Showing 1–{shown.length} of {num(visible.length)}</p>
+            </div>
+          )}
+        </section>
+
+        <aside className="rail" aria-label="Post and the record">
+          <section className="card" aria-label="Post an entry">
+            <Composer />
+          </section>
+
+          <section className="card record" aria-labelledby="record-h">
+            <h2 id="record-h" className="card-title">The record</h2>
+            <dl className="figures">
+              <div className="fig fig-lead">
+                <dt>Entries on the board</dt>
+                <dd>{num(stats.total)}</dd>
+              </div>
+              <div className="fig">
+                <dt>Posted today</dt>
+                <dd>{num(stats.today)}</dd>
+              </div>
+              <div className="fig fig-wide">
+                <dt>Entries per day, last 7 days</dt>
+                <dd><DayBars entries={entries} /></dd>
+              </div>
+              <div className="fig fig-wide">
+                <dt>Most reacted</dt>
+                <dd>
+                  <Link to={`/entry/${mr.id}`} className="mr">
+                    <span className="mr-head">#{num(mr.id)} · {plural(totalReactions(mr), 'reaction')}</span>
+                    <span className="mr-text">{mr.text}</span>
+                  </Link>
+                </dd>
+              </div>
+            </dl>
+            <p className="source">{DEMO_MODE ? 'Demo data, computed from the entries on this page.' : 'Read live from the contract.'}</p>
+          </section>
+        </aside>
+      </div>
     </div>
   )
 }

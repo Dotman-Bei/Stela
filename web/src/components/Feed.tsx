@@ -1,18 +1,40 @@
 import { Link } from 'react-router-dom'
 import { CATEGORIES, REACTIONS } from '../data/genesis'
 import { totalReactions, type Entry } from '../lib/chain'
-import { ago, num, short } from '../lib/format'
+import { ago, num, plural, short } from '../lib/format'
 import { Constellation, ReactionGlyph } from './Glyphs'
 
 /** Entries on the chain strand: one gold point per entry, each row naming the hash it links to. */
-export function ChainFeed({ entries, fresh, showAuthor = true }: { entries: Entry[]; fresh?: number | null; showAuthor?: boolean }) {
+export function ChainFeed({ entries, fresh, showAuthor = true, byDay = false }: { entries: Entry[]; fresh?: number | null; showAuthor?: boolean; byDay?: boolean }) {
+  const groups: { day: string; items: Entry[] }[] = []
+  for (const e of entries) {
+    const day = byDay ? dayLabel(e.timestamp) : ''
+    if (groups.length && groups[groups.length - 1].day === day) groups[groups.length - 1].items.push(e)
+    else groups.push({ day, items: [e] })
+  }
   return (
     <ul className="strand">
-      {entries.map((e) => (
-        <EntryRow key={e.id} entry={e} fresh={e.id === fresh} showAuthor={showAuthor} />
-      ))}
+      {groups.map((g) => [
+        byDay && (
+          <li key={`d-${g.items[0].id}`} className="day-row">
+            <span className="day-point" aria-hidden="true" />
+            <h3>{g.day} <span className="faint">{plural(g.items.length, 'entry', 'entries')}</span></h3>
+          </li>
+        ),
+        ...g.items.map((e) => <EntryRow key={e.id} entry={e} fresh={e.id === fresh} showAuthor={showAuthor} />),
+      ])}
     </ul>
   )
+}
+
+function dayLabel(ts: number) {
+  const d = new Date(ts)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diff = Math.round((today.getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86_400_000)
+  if (diff === 0) return 'Today'
+  if (diff === 1) return 'Yesterday'
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 function EntryRow({ entry: e, fresh, showAuthor }: { entry: Entry; fresh: boolean; showAuthor: boolean }) {
